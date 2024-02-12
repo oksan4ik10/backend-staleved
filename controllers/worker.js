@@ -1,29 +1,41 @@
-const Worker = require("../models/Role")
+const bcrypt = require('bcryptjs');
+
+const Worker = require("../models/Worker")
+
+
 
 module.exports.getAll = (req, res)=> {
 
 }
-module.exports.create = (req, res)=> {
+module.exports.create = async (req, res)=> {
+    // const {name, }
+    const {name, salary, login, password, idRole} = req.body;
+    const candidate = await Worker.findOne({login: login});
+    if(candidate){
+        res.status(409).json({
+            message: "Такой пользователь уже существует"
+        })
+        return
+    }
+
+    const salt = bcrypt.genSaltSync(10);
     const worker = new Worker({
-        code: "admin",
-        name: "Администрация"
+        login: login,
+        password:bcrypt.hashSync(password, salt),
+        name: name,
+        salary: salary ? salary : null,
+        idRole: idRole
     })
-    worker.save().then(()=> console.log("Work!"))
-    const worker2 = new Worker({
-        code: "management",
-        name: "Дирекция"
-    })
-    worker2.save().then(()=> console.log("Work!"))
-    const worker3 = new Worker({
-        code: "responsible",
-        name: "Руководство проектов"
-    })
-    worker3.save().then(()=> console.log("Work!"))
-    const worker4 = new Worker({
-        code: "worker",
-        name: "Сотрудник"
-    })
-    worker4.save().then(()=> console.log("Work!"))
+    console.log(worker);
+
+    try{
+        await worker.save()
+        res.status(200).json(worker)
+    }catch(e){
+      console.log(e);
+    }
+
+
 
 }
 module.exports.delete = (req, res)=> {

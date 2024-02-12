@@ -17,7 +17,7 @@ const workerSchema = new Schema ({
     salary: {
         type: Number,
     },
-    role: {
+    idRole: {
         ref:'roles',
         type: Schema.Types.ObjectId,
         required: true       
