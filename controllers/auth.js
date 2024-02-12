@@ -1,0 +1,8 @@
+module.exports.login = (req, res)=> {
+    res.status(200).json({
+        login: {
+            password: req.body.password
+        }
+    })
+}
+
