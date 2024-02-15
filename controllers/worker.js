@@ -1,14 +1,28 @@
 const bcrypt = require('bcryptjs');
+const errorHandler = require('../utils/errorHandler')
 
 const Worker = require("../models/Worker")
 
 
 
-module.exports.getAll = (req, res)=> {
+module.exports.getAll = async (req, res)=> {
+
+    let keysQuery =Object.assign({}, req.query);
+    let paramOrdering = {};
+    if(keysQuery["ordering"]) {
+        const sort = keysQuery["ordering"][0] === "-" ? -1 : 1; 
+        const key = keysQuery["ordering"][0] === "-"? keysQuery["ordering"].slice(1) :  keysQuery["ordering"];
+        paramOrdering [key] = sort;
+       
+    }
+    delete keysQuery["ordering"]
+    const workers = await Worker.find(keysQuery).sort(paramOrdering);
+
+    res.status(400).json(workers)
+
 
 }
 module.exports.create = async (req, res)=> {
-    // const {name, }
     const {name, salary, login, password, idRole} = req.body;
     const candidate = await Worker.findOne({login: login});
     if(candidate){
@@ -26,13 +40,12 @@ module.exports.create = async (req, res)=> {
         salary: salary ? salary : null,
         idRole: idRole
     })
-    console.log(worker);
 
     try{
         await worker.save()
         res.status(200).json(worker)
     }catch(e){
-      console.log(e);
+        errorHandler(res, e)
     }
 
 
