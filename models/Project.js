@@ -18,10 +18,13 @@ const projectSchema = new Schema({
         type: Number,
         required: true
     },
-    responsibleUser: {
+    idResponsibleUser: {
         ref:'workers',
         type: Schema.Types.ObjectId,
         required: true       
+    },
+    desc: {
+        type: String,
     },
 })
 
