@@ -18,7 +18,8 @@ module.exports.login = async (req, res)=> {
                 const role = await Role.findOne({_id: candidate.idRole});
                 res.status(200).json({
                     token: `Bearer ${token}`,
-                    role: role
+                    role: role,
+                    id: candidate._id
 
                 })
             } else{

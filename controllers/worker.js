@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const errorHandler = require('../utils/errorHandler')
 
 const Worker = require("../models/Worker")
+const Role = require("../models/Role")
 
 
 
@@ -18,7 +19,15 @@ module.exports.getAll = async (req, res)=> {
     delete keysQuery["ordering"]
     const workers = await Worker.find(keysQuery).sort(paramOrdering);
 
-    res.status(400).json(workers)
+    const dataPromise = await Promise.all(workers.map(async (item)=> {
+        const cat = await Role.findOne({_id: item.idRole});
+        let obj = Object.assign({}, item)
+        obj["role"] = cat;
+        return obj;
+    }))
+    
+    const data = dataPromise.map((item)=> ({...item["_doc"], role: item["role"]}))
+    res.status(400).json(data)
 
 
 }
@@ -51,12 +60,52 @@ module.exports.create = async (req, res)=> {
 
 
 }
-module.exports.delete = (req, res)=> {
+module.exports.delete = async (req, res)=> {
+    const worker = await Worker.findOne({_id:req.params.id})
+    if(worker.busy) {
+        res.status("404").json({message: "Пользователь задейстован в проекте"})
+        return
+    }
+    try{
+        await Worker.deleteOne({_id:req.params.id})
+        res.status(200).json({message: "Удаление прошло успешно"})
+    }catch(e){
+        errorHandler(res, e)
+    }
+}
+module.exports.update = async (req, res)=> {
+    const {name, salary, password, idRole, busy} = req.body;
+    const worker = await Worker.findOne({_id:req.params.id})
+
+        if(name) worker.name = name;
+        if(salary) worker.salary = salary;
+        if(password) {
+            const salt = bcrypt.genSaltSync(10);
+            worker.password = bcrypt.hashSync(password, salt)
+        }
+        if(idRole) worker.idRole = idRole;
+        if(busy !== undefined) worker.busy = busy;
+        try{
+            await worker.save()
+            res.status(200).json(worker)
+        }catch(e){
+            errorHandler(res, e)
+        }
 
 }
-module.exports.update = (req, res)=> {
+module.exports.getById = async (req, res)=> {
+    try{
+        const user = await Worker.findOne({_id:req.params.id});
+        if(!user){
+            res.status(404).json({message: "Пользователь не найден"})
+        }
+        const role = await Role.findOne({_id: user.idRole});
+        res.status(200).json({...user["_doc"], role: role})
 
-}
-module.exports.getById = (req, res)=> {
+    } catch(e){
+        errorHandler(res,e)
+    }
+
+
 
 }
