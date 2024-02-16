@@ -1,12 +1,22 @@
 const errorHandler = require('../utils/errorHandler')
 
 const Project = require("../models/Project")
-
+const Worker = require("../models/Worker")
 
 module.exports.getAll = async(req, res)=> {
     try{
-        const project = await Project.find()
-        res.status(200).json(project)
+        const projects = await Project.find()
+
+        const dataPromise = await Promise.all(projects.map(async (item)=> {
+            const worker = await Worker.findOne({_id: item.idResponsibleUser});
+            let obj = Object.assign({}, item)
+            obj["worker"] = worker;
+            return obj;
+        }))
+
+
+        const data = dataPromise.map((item)=> ({...item["_doc"], worker: item["worker"]}))
+        res.status(400).json(data)
     }catch(e){
         errorHandler(res, e)
     }

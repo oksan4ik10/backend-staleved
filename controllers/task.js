@@ -1,15 +1,130 @@
-module.exports.getAll = (req, res)=> {
+const errorHandler = require('../utils/errorHandler')
+
+const Project = require("../models/Project")
+const Task = require("../models/Task")
+const Worker = require("../models/Worker")
+const Tracking = require("../models/Tracking")
+
+module.exports.getAll = async (req, res)=> {
+    let keysQuery =Object.assign({}, req.query, {IDproject:req.params.IDproject});
+    let paramOrdering = {};
+    if(keysQuery["ordering"]) {
+        const sort = keysQuery["ordering"][0] === "-" ? -1 : 1; 
+        const key = keysQuery["ordering"][0] === "-"? keysQuery["ordering"].slice(1) :  keysQuery["ordering"];
+        paramOrdering [key] = sort;
+       
+    }
+    delete keysQuery["ordering"]
+    const tasks = await Task.find(keysQuery).sort(paramOrdering);
+
+    const dataPromise = await Promise.all(tasks.map(async (item)=> {
+        const worker = await Worker.findOne({_id: item.IDworker});
+        const project = await Project.findOne({_id: item.IDproject});
+        let obj = Object.assign({}, item)
+        obj["worker"] = worker;
+        obj["project"] = project;
+        return obj;
+    }))
+    
+    const data = dataPromise.map((item)=> ({...item["_doc"], worker: item["worker"], project: item["project"]}))
+    res.status(400).json(data)
 
 }
-module.exports.create = (req, res)=> {
+module.exports.create = async(req, res)=> {
+    const {name, timePlan, date_start, date_PlanEnd, desc, IDworker,IDproject } = req.body;
+
+    const task = new Task({
+        name: name,
+        timePlan: timePlan,
+        date_start: date_start,
+        date_PlanEnd:  date_PlanEnd,
+        status: "active",
+        IDworker: IDworker, 
+        IDproject: IDproject,
+        desc: desc ? desc : ""
+    })
+
+
+    const IDtask = task._id;
+    const dateObj = getDatesInRange(new Date(date_start),new Date(date_PlanEnd)).map((item)=> ({
+        dateWork: item,
+        timePlan: 0,
+        timeFact: 0
+    }))
+
+
+    const track = new Tracking({
+        IDworker: IDworker, 
+        IDproject: IDproject,
+        IDtask: IDtask,
+        attr: dateObj
+        
+    })
+
+    try{
+        await task.save()
+        await track.save()
+        res.status(200).json(task)
+    }catch(e){
+        errorHandler(res, e)
+    }
 
 }
-module.exports.delete = (req, res)=> {
+module.exports.delete = async (req, res)=> {
+    try{
+        await Task.deleteOne({_id:req.params.id})
+        await Tracking.deleteOne({IDtask:req.params.id})
+        res.status(200).json({message: "Удаление прошло успешно"})
+    }catch(e){
+        errorHandler(res, e)
+    }
+}
+module.exports.update = async (req, res)=> {
+
+    const {name, date_start, IDworker, status, desc, timePlan, timeFact} = req.body;
+    const task = await Task.findOne({_id:req.params.id})
+
+        if(name) task.name = name;
+        if(date_start) task.date_start = date_start;
+        if(IDworker) task.IDworker = IDworker;
+        if(status) task.status = status;
+        if(desc) task.desc = desc;
+        if(timePlan) task.timePlan = timePlan;
+        if(timeFact) task.timeFact = timeFact;
+        try{
+            await task.save()
+            res.status(200).json(task)
+        }catch(e){
+            errorHandler(res, e)
+        }
 
 }
-module.exports.update = (req, res)=> {
+module.exports.getById = async(req, res)=> {
+    try{
+        const task = await Task.findOne({_id:req.params.id});
+        if(!task){
+            res.status(404).json({message: "Задача не найдена"})
+            return
+        }
+        const worker = await Worker.findOne({_id: task.IDworker});
+        res.status(200).json({...task["_doc"], worker: worker})
 
+    } catch(e){
+        errorHandler(res,e)
+    }
 }
-module.exports.getById = (req, res)=> {
 
-}
+function getDatesInRange(startDate, endDate) {
+    const date = new Date(startDate.getTime());
+  
+    date.setDate(date.getDate() + 1);
+  
+    const dates = [];
+  
+    while (date < endDate) {
+      dates.push(new Date(date));
+      date.setDate(date.getDate() + 1);
+    }
+  
+    return dates;
+  }

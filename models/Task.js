@@ -10,7 +10,7 @@ const taskSchema = new Schema({
         type: Date,
         required: true
     },
-    date_end: {
+    date_PlanEnd: {
         type: Date,
         required: true
     },
@@ -20,18 +20,25 @@ const taskSchema = new Schema({
     },
     timeFact: {
         type: Number,
-        required: true
     },
-    worker: {
+    IDworker: {
         ref:'workers',
         type: Schema.Types.ObjectId,
         required: true       
     },
-    project: {
+    IDproject: {
         ref:'projects',
         type: Schema.Types.ObjectId,
         required: true       
     },
+    status: {
+        type: String,
+        default: "active",
+        required: true
+    },
+    desc: {
+        type: String
+    }
 })
 
 module.exports = model("tasks", taskSchema)
