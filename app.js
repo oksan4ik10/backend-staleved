@@ -10,6 +10,7 @@ const roleRoute = require('./routes/role');
 const analyticsRoute = require('./routes/analytics')
 const taskRoute = require('./routes/task')
 const projectRoute = require('./routes/project');
+const trackingRoute = require('./routes/tracking');
 const config = require("./config/config");
 
 const app = express();
@@ -41,6 +42,7 @@ app.use('/api/role',roleRoute)
 app.use('/api/analytics',analyticsRoute)
 app.use('/api/task',taskRoute)
 app.use('/api/project',projectRoute)
+app.use('/api/tracking',trackingRoute)
 
 
 module.exports = app;

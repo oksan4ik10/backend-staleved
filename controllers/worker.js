@@ -109,3 +109,27 @@ module.exports.getById = async (req, res)=> {
 
 
 }
+
+module.exports.getBusyFree = async (req, res)=> {
+
+    try{
+        const workers = await Worker.find({idRole: "65ca2f82217019cc9ecb2455", busy: false});
+        if(!workers.length === 0){
+            res.status(404).json({message: "Пользователи не найдены"})
+        }
+
+        const dataPromise = await Promise.all(workers.map(async (item)=> {
+            const cat = await Role.findOne({_id: item.idRole});
+            let obj = Object.assign({}, item)
+            obj["role"] = cat;
+            return obj;
+        }))
+        
+        const data = dataPromise.map((item)=> ({...item["_doc"], role: item["role"]}))
+        res.status(400).json(data)
+
+    } catch(e){
+        errorHandler(res,e)
+    }
+    
+}
