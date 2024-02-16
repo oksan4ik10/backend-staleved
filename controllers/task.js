@@ -61,9 +61,13 @@ module.exports.create = async(req, res)=> {
         
     })
 
+    const worker = await Worker.findOne({_id:IDworker})
+    worker.busy = true;
+
     try{
         await task.save()
         await track.save()
+        await worker.save()
         res.status(200).json(task)
     }catch(e){
         errorHandler(res, e)
@@ -71,9 +75,13 @@ module.exports.create = async(req, res)=> {
 
 }
 module.exports.delete = async (req, res)=> {
+    const task = await Task.findOne({_id:req.params.id})
+    const worker = await Worker.findOne({_id: task.IDworker})
+    worker.busy = true;;
     try{
         await Task.deleteOne({_id:req.params.id})
         await Tracking.deleteOne({IDtask:req.params.id})
+        await worker.save()
         res.status(200).json({message: "Удаление прошло успешно"})
     }catch(e){
         errorHandler(res, e)
@@ -81,12 +89,10 @@ module.exports.delete = async (req, res)=> {
 }
 module.exports.update = async (req, res)=> {
 
-    const {name, date_start, IDworker, status, desc, timePlan, timeFact} = req.body;
+    const {name, status, desc, timePlan, timeFact} = req.body;
     const task = await Task.findOne({_id:req.params.id})
 
         if(name) task.name = name;
-        if(date_start) task.date_start = date_start;
-        if(IDworker) task.IDworker = IDworker;
         if(status) task.status = status;
         if(desc) task.desc = desc;
         if(timePlan) task.timePlan = timePlan;
