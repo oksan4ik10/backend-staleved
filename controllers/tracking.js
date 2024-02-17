@@ -21,9 +21,36 @@ module.exports.getByTask = async (req, res)=> {
 
 }
 module.exports.update = async(req, res)=> {
+    const {attr} = req.body;
+    try{
+        const track = await Track.findOne({IDtask: req.params.IDtask});
+        if(attr) track.attr = attr;
+        await track.save();
+        res.status(200).json(track)
 
+
+    } catch(e){
+        errorHandler(res,e)
+    }
 }
 
 module.exports.updateDateFact = async(req, res)=> {
-
+    try{
+        const {dateWork, timeFact} = req.body;
+        const track = await Track.findOne({IDtask: req.params.IDtask});
+        const getTimeNewDate = new Date(dateWork).getTime();
+        let isDate = false;
+        track.attr = track.attr.map((item)=> {
+            if(item.dateWork.getTime() === getTimeNewDate){
+                item.timeFact = timeFact
+                isDate = true;
+            }
+            return item
+        })
+        if(!isDate) track.attr.push({...req.body, timePlan: 0});
+        await track.save();
+        res.status(200).json(track)
+    } catch(e){
+        errorHandler(res,e)
+    }
 }
