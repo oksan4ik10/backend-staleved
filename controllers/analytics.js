@@ -11,7 +11,7 @@ const ObjectId = require('mongodb').ObjectId;
 const year = 2024;
 module.exports.plan = async (req, res)=> {
     const project =  await Project.findOne({_id: req.params.IDproject});
-    const tracks = await Track.find({IDproject: req.params.IDproject});
+
     const data = [];
 
     const monthStart = new Date(project.date_start).getMonth();
@@ -23,7 +23,7 @@ module.exports.plan = async (req, res)=> {
     const months = Array.from(new Set([monthStart, monthEnd])).map((item)=> {
         const start = new Date(year, item, 2);
         const end = new Date(year, item, new Date(year, item + 1, 0).getDate()+1);
-        const monthName = start.toLocaleString('default', { month: 'long' });
+        const monthName = `${start.toLocaleString('default', { month: 'long' })}, ${year}`;
         return {start, end, monthName};
     });
 
@@ -42,29 +42,20 @@ module.exports.plan = async (req, res)=> {
             {$group: {_id: "$idLine", timePlan: {$sum: "$timePlan"}, timeFact: {$sum: "$timeFact"}, FOTfact: {$sum: "$FOTfact"}, FOTplan: {$sum: "$FOTplan"}, countWorkers: {$sum: "$count"}}},
             {$project: {timePlan: 1, countWorkers: 1, timeFact: 1,timeProc: {$multiply:[{$divide: ["$timeFact", "$timePlan"]}, 100]},FOTplan:1, FOTfact:1, month: item.monthName}}
         ])
-        console.log(test);
         data.push(test[0])
     }))
 
+    let sumTime = 0;
+    const dataRes = data.map((item)=> {
+        sumTime+=item.timeFact;
+        item.timeProgress = sumTime;
+        return item
+    })
+
+    res.status(400).json({data: dataRes, project: project})
 
 
 
-
-//     test.forEach((item)=> {
-// console.log(item.attr.length);
-//     })
-    return
-    await Promise.all(tracks.map(async (item)=> {
-        const salary = await Worker.findOne({_id: item.IDworker}).salary;
-      
-        item.attr.forEach((item)=> {
-
-        })
-        
-    
-    }))
-
-    console.log(salary);
 }
 module.exports.temp = (req, res)=> {
 
