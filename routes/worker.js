@@ -5,7 +5,8 @@ const { session } = require('passport')
 const passport = require('passport')
 const controller = require('../controllers/worker')
 
-router.get('/', passport.authenticate('jwt', {session: false}), controller.getAll);
+// router.get('/', passport.authenticate('jwt', {session: false}), controller.getAll);
+router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
 router.post('/', controller.create);
 router.patch('/:id', controller.update);

@@ -5,7 +5,21 @@ const Worker = require("../models/Worker")
 
 module.exports.getAll = async(req, res)=> {
     try{
-        const projects = await Project.find()
+
+        let keysQuery =Object.assign({}, req.query);
+        let paramOrdering = {};
+        if(keysQuery["ordering"]) {
+            const sort = keysQuery["ordering"][0] === "-" ? -1 : 1; 
+            const key = keysQuery["ordering"][0] === "-"? keysQuery["ordering"].slice(1) :  keysQuery["ordering"];
+            paramOrdering [key] = sort;
+           
+        }
+        delete keysQuery["ordering"]
+        for(const key in keysQuery){
+            if(!keysQuery[key]) delete keysQuery[key]
+        }
+
+        const projects = await Project.find(keysQuery).sort(paramOrdering);
 
         const dataPromise = await Promise.all(projects.map(async (item)=> {
             const worker = await Worker.findOne({_id: item.idResponsibleUser});
@@ -16,7 +30,7 @@ module.exports.getAll = async(req, res)=> {
 
 
         const data = dataPromise.map((item)=> ({...item["_doc"], worker: item["worker"]}))
-        res.status(400).json(data)
+        res.status(200).json(data)
     }catch(e){
         errorHandler(res, e)
     }

@@ -17,6 +17,9 @@ module.exports.getAll = async (req, res)=> {
        
     }
     delete keysQuery["ordering"]
+    for(const key in keysQuery){
+        if(!keysQuery[key]) delete keysQuery[key]
+    }
     const workers = await Worker.find(keysQuery).sort(paramOrdering);
 
     const dataPromise = await Promise.all(workers.map(async (item)=> {
@@ -27,7 +30,7 @@ module.exports.getAll = async (req, res)=> {
     }))
     
     const data = dataPromise.map((item)=> ({...item["_doc"], role: item["role"]}))
-    res.status(400).json(data)
+    res.status(200).json(data)
 
 
 }
@@ -75,6 +78,7 @@ module.exports.delete = async (req, res)=> {
 }
 module.exports.update = async (req, res)=> {
     const {name, salary, password, idRole, busy} = req.body;
+ 
     const worker = await Worker.findOne({_id:req.params.id})
 
         if(name) worker.name = name;
@@ -126,7 +130,7 @@ module.exports.getBusyFree = async (req, res)=> {
         }))
         
         const data = dataPromise.map((item)=> ({...item["_doc"], role: item["role"]}))
-        res.status(400).json(data)
+        res.status(200).json(data)
 
     } catch(e){
         errorHandler(res,e)

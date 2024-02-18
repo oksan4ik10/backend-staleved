@@ -6,7 +6,7 @@ const Worker = require("../models/Worker")
 const Tracking = require("../models/Tracking")
 
 module.exports.getAll = async (req, res)=> {
-    let keysQuery =Object.assign({}, req.query, {IDproject:req.params.IDproject});
+    let keysQuery =Object.assign({}, req.query);
     let paramOrdering = {};
     if(keysQuery["ordering"]) {
         const sort = keysQuery["ordering"][0] === "-" ? -1 : 1; 
@@ -15,6 +15,9 @@ module.exports.getAll = async (req, res)=> {
        
     }
     delete keysQuery["ordering"]
+    for(const key in keysQuery){
+        if(!keysQuery[key]) delete keysQuery[key]
+    }
     const tasks = await Task.find(keysQuery).sort(paramOrdering);
 
     const dataPromise = await Promise.all(tasks.map(async (item)=> {
@@ -27,7 +30,7 @@ module.exports.getAll = async (req, res)=> {
     }))
     
     const data = dataPromise.map((item)=> ({...item["_doc"], worker: item["worker"], project: item["project"]}))
-    res.status(400).json(data)
+    res.status(200).json(data)
 
 }
 module.exports.create = async(req, res)=> {

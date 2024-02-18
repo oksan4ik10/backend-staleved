@@ -12,6 +12,7 @@ const taskRoute = require('./routes/task')
 const projectRoute = require('./routes/project');
 const trackingRoute = require('./routes/tracking');
 const config = require("./config/config");
+const cors = require("cors");
 
 const app = express();
 
@@ -26,7 +27,8 @@ app.use(require("morgan")("dev")) //для отображения в терми�
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 
-app.use(require("cors")()) //обрабатывать запросы клиента с другого домена
+app.use(cors()) //обрабатывать запросы клиента с другого домена
+app.options('*', cors());
 
 
 //защита роутингов
