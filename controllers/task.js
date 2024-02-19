@@ -34,14 +34,14 @@ module.exports.getAll = async (req, res)=> {
 
 }
 module.exports.create = async(req, res)=> {
-    const {name, timePlan, date_start, date_PlanEnd, desc, IDworker,IDproject } = req.body;
+    const {name, timePlan, date_start, date_end, desc, IDworker,IDproject, status } = req.body;
 
     const task = new Task({
         name: name,
         timePlan: timePlan,
         date_start: date_start,
-        date_PlanEnd:  date_PlanEnd,
-        status: "active",
+        date_PlanEnd:  date_end,
+        status: status,
         IDworker: IDworker, 
         IDproject: IDproject,
         desc: desc ? desc : ""
@@ -49,7 +49,7 @@ module.exports.create = async(req, res)=> {
 
 
     const IDtask = task._id;
-    const dateObj = getDatesInRange(new Date(date_start),new Date(date_PlanEnd)).map((item)=> ({
+    const dateObj = getDatesInRange(new Date(date_start),new Date(date_end)).map((item)=> ({
         dateWork: item,
         timePlan: 0,
         timeFact: 0
@@ -96,7 +96,14 @@ module.exports.update = async (req, res)=> {
     const task = await Task.findOne({_id:req.params.id})
 
         if(name) task.name = name;
-        if(status) task.status = status;
+        if(status) {
+            task.status = status;
+            if(status === "Завершен"){
+                const worker = await Worker.findOne({_id: task.IDworker});
+                worker.busy = false;
+                await worker.save();
+            }
+        }
         if(desc) task.desc = desc;
         if(timePlan) task.timePlan = timePlan;
         if(timeFact) task.timeFact = timeFact;
@@ -116,7 +123,8 @@ module.exports.getById = async(req, res)=> {
             return
         }
         const worker = await Worker.findOne({_id: task.IDworker});
-        res.status(200).json({...task["_doc"], worker: worker})
+        const project = await Project.findOne({_id: task.IDproject});
+        res.status(200).json({...task["_doc"], worker: worker, project: project})
 
     } catch(e){
         errorHandler(res,e)

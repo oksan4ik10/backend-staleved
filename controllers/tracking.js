@@ -24,7 +24,10 @@ module.exports.update = async(req, res)=> {
     const {attr} = req.body;
     try{
         const track = await Track.findOne({IDtask: req.params.IDtask});
-        if(attr) track.attr = attr;
+       if(attr) {
+        track.attr = attr;
+    }
+
         await track.save();
         res.status(200).json(track)
 

@@ -77,6 +77,7 @@ module.exports.delete = async (req, res)=> {
     }
 }
 module.exports.update = async (req, res)=> {
+
     const {name, salary, password, idRole, busy} = req.body;
  
     const worker = await Worker.findOne({_id:req.params.id})

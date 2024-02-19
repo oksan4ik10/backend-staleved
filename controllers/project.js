@@ -90,8 +90,8 @@ module.exports.getById = async (req, res)=> {
             })
         }
     
-
-        res.status(200).json(project)
+        const worker = await Worker.findOne({_id: project.idResponsibleUser});
+        res.status(200).json({...project["_doc"], worker: worker})
     }catch(e){
         errorHandler(res, e)
     }
