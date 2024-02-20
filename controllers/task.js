@@ -47,14 +47,12 @@ module.exports.create = async(req, res)=> {
         desc: desc ? desc : ""
     })
 
-
     const IDtask = task._id;
     const dateObj = getDatesInRange(new Date(date_start),new Date(date_end)).map((item)=> ({
         dateWork: item,
         timePlan: 0,
         timeFact: 0
     }))
-
 
     const track = new Tracking({
         IDworker: IDworker, 
