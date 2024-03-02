@@ -69,9 +69,3 @@ module.exports.plan = async (req, res)=> {
 
 
 }
-module.exports.temp = (req, res)=> {
-
-}
-module.exports.statistics = (req, res)=> {
-
-}
